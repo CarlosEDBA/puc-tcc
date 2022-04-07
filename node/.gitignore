@@ -3,3 +3,4 @@
 /logs/*
 !/logs/README.md
 .idea/
+.DS_Store
