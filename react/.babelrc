@@ -1,0 +1,30 @@
+{
+	"presets": [
+		[
+      "@babel/preset-env",
+      {
+        "targets": { "node": "current" },
+      }
+    ],
+		"@babel/preset-react"
+	],
+
+	"plugins": [
+    ["@babel/plugin-transform-async-to-generator", {
+      "module": "bluebird",
+      "method": "coroutine"
+    }],
+    ["react-css-modules", {
+      "generateScopedName": "[name]_[local]__[hash:base64:5]",
+      "autoResolveMultipleImports": true
+    }],
+		"react-hot-loader/babel"
+  ],
+
+	"env": {
+		"production": {
+			"presets": []
+		}
+	}
+}
+
