@@ -16,6 +16,4 @@ const schema = new Schema({
     collection: 'estados'
 })
 
-schema.plugin(mongooseFuzzySearching, { fields: ['nome'] })
-
 module.exports = schema

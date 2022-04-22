@@ -5,14 +5,14 @@ const mongooseFuzzySearching = require('mongoose-fuzzy-searching')
 
 const Schema = mongoose.Schema
 const ObjectId = Schema.Types.ObjectID
+const Mixed = Schema.Types.Mixed
 
 const schema = new Schema({
-    pais:                   { type: ObjectId, ref: 'Pais' },
-    estado:                 { type: ObjectId, ref: 'Estado' },
-    nome: String,
-    slug: String
+  usuario:            { type: ObjectId, ref: 'Usuario' },
+  nome:               String,
+  valor:              Mixed,
 }, {
-    collection: 'cidades'
+  collection: 'preferencias-usuarios'
 })
 
 module.exports = schema
