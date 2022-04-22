@@ -1,17 +1,23 @@
-const Promise = require('bluebird')
 const fs = require('fs')
 const path = require('path')
 const express = require('express')
 const multer = require('multer')
-const bcrypt = require('bcrypt')
 
-const Usuario = require('../api/Usuarios')
+const PaisApi = require('../api/PaisApi')
+const EstadoApi = require('../api/EstadoApi')
+const CidadeApi = require('../api/CidadeApi')
+const PacoteApi = require('../api/PacoteApi')
+const ServicoApi = require('../api/ServicoApi')
+const ServicoPacoteApi = require('../api/ServicoPacoteApi')
+const TipoDocumentoApi = require('../api/TipoDocumentoApi')
+const StatusProcessoApi = require('../api/StatusProcessoApi')
+const PreferenciaUsuarioApi = require('../api/PreferenciaUsuarioApi')
 
-const AuthEndpoint = require('../endpoints/AuthEndpoint')
-const PublicEndpoint = require('../endpoints/PublicEndpoint')
 const MainEndpoint = require('../endpoints/MainEndpoint')
+const PublicEndpoint = require('../endpoints/PublicEndpoint')
 const FileSystemEndpoint = require('../endpoints/FileSystemEndpoint')
-const SearchEndpoint = require('../endpoints/SearchEndpoint')
+
+const Auth = require('../Auth')
 
 const globals = require('../globals')
 
@@ -50,6 +56,33 @@ module.exports = (jwt) => {
 
   const upload = multer({ storage: storage })
 
+  router.get('/v1/paises/:id', PaisApi.findOneById)
+  router.get('/v1/paises', PaisApi.findAll)
+
+  router.get('/v1/estados/:id', EstadoApi.findOneById)
+  router.get('/v1/estados', EstadoApi.findAll)
+
+  router.get('/v1/cidades/:id', CidadeApi.findOneById)
+  router.get('/v1/cidades', CidadeApi.findAll)
+
+  router.get('/v1/pacotes/:id', PacoteApi.findOneById)
+  router.get('/v1/pacotes', PacoteApi.findAll)
+
+  router.get('/v1/servicos/:id', ServicoApi.findOneById)
+  router.get('/v1/servicos', ServicoApi.findAll)
+
+  router.get('/v1/servicos-pacotes/:id', ServicoPacoteApi.findOneById)
+  router.get('/v1/servicos-pacotes', ServicoPacoteApi.findAll)
+
+  router.get('/v1/tipos-documentos/:id', TipoDocumentoApi.findOneById)
+  router.get('/v1/tipos-documentos', TipoDocumentoApi.findAll)
+
+  router.get('/v1/status-processos/:id', StatusProcessoApi.findOneById)
+  router.get('/v1/status-processos', StatusProcessoApi.findAll)
+
+  router.get('/v1/preferencias-usuarios/:id', PreferenciaUsuarioApi.findOneById)
+  router.get('/v1/preferencias-usuarios', PreferenciaUsuarioApi.findAll)
+
   router.post(
       '/v1/public',
       ...parsers,
@@ -78,146 +111,42 @@ module.exports = (jwt) => {
   router.post('/v1/token', ...parsers, async (req, res) => {
     const data = req.body
 
-    if (data.email && typeof data.email === 'string') data.email = data.email.toLowerCase()
+    // todo: transform jwt to singleton
 
-    if (data.email && data.senha) {
-      let usuario = await Usuario.findOne({ email: data.email }).catch((err) => {
-        res.json({
-          token: null,
-          error: {
-            code: 1000,
-            message: 'An error occurred.'
-          }
+    const token = await Auth.authenticate(jwt, data.email, data.senha)
+        .catch((err) => {
+          res.json({
+            error: err.message
+          })
         })
-      })
 
-      if (usuario) {
-        usuario = usuario.toObject()
-        const idUsuario = usuario._id.toString()
-
-        bcrypt.compare(data.senha, usuario.senha, async (err, matches) => {
-          if (matches) {
-            const payload = {
-              _id: idUsuario,
-              nome: usuario.nome,
-              sobrenome: usuario.sobrenome,
-              email: usuario.email,
-              foto: usuario.foto
-            }
-
-            const token = await jwt.generateToken(null, idUsuario, payload).catch((err) => {
-              res.json({
-                token: null,
-                error: {
-                  code: 1000,
-                  message: 'An error occurred.'
-                }
-              })
-            })
-
-            res.json({ token: token })
-          } else {
-            res.json({
-              token: null,
-              error: {
-                code: 1001,
-                message: 'Wrong credentials.'
-              }
-            })
-          }
-        })
-      } else {
-        res.json({
-          token: null,
-          error: {
-            code: 1001,
-            message: 'Wrong credentials.'
-          }
-        })
-      }
-    } else {
-      res.json({
-        token: null,
-        error: {
-          code: 1001,
-          message: 'Credentials missing.'
-        }
-      })
-    }
+    if (token) res.json({ token: token })
   })
 
   router.post('/v1/token/validate', ...parsers, async (req, res) => {
     const data = req.body
 
-    if (data.token) {
-      const tokenIsValid = await jwt.verifyToken(data.token).catch((err) => {
-        res.json({
-          token: null,
-          error: {
-            message: 'Invalid token.'
-          }
+    const token = await Auth.validate(jwt, data.token)
+        .catch((err) => {
+          res.json({
+            error: err.message
+          })
         })
-      })
 
-      if (tokenIsValid) res.json({ token: data.token })
-    } else {
-      res.json({
-        token: null,
-        error: {
-          message: 'Token not provided.'
-        }
-      })
-    }
+    if (token) res.json({ token: token })
   })
 
   router.post('/v1/token/renew', express.urlencoded({ extended: true }), async (req, res) => {
     const data = req.body
 
-    if (data.token) {
-      const decodedToken = await jwt.verifyToken(data.token).catch((err) => {
-        res.json({
-          token: null,
-          error: {
-            message: 'Invalid token.'
-          }
-        })
-      })
-
-      if (decodedToken) {
-        const payload = {
-          _id: decodedToken._id,
-          nome: decodedToken.nome,
-          sobrenome: decodedToken.sobrenome,
-          email: decodedToken.email,
-          foto: decodedToken.foto
-        }
-
-        const token = await jwt.generateToken(null, decodedToken._id, payload).catch((err) => {
+    const token = await Auth.renew(jwt, data.token)
+        .catch((err) => {
           res.json({
-            token: null,
-            error: {
-              message: 'An error occurred.'
-            }
+            error: err.message
           })
         })
 
-        res.json({ token: token })
-      } else {
-        res.json({
-          token: null,
-          error: {
-            message: 'An error occurred.'
-          }
-        })
-      }
-    } else {
-      res.json({
-        token: null,
-        error: {
-          message: 'Token not provided.'
-        }
-      })
-    }
+    if (token) res.json({ token: token })
   })
 
   return router

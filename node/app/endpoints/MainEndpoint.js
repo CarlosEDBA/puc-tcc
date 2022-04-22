@@ -2,10 +2,10 @@ const Promise = require('bluebird')
 const nanoid = require('nanoid')
 const moment = require('moment')
 
-const Usuario = Promise.promisifyAll(require('../model/Usuario'))
+const Aluno = Promise.promisifyAll(require('../model/Aluno'))
 
 const models = {
-  Usuario,
+  Aluno,
 }
 
 let cache = {}
@@ -65,9 +65,8 @@ function mergeObjects(payload) {
 
   let mergedData = {}
 
-  let data = payload.data
-  let formData = data.formData
-  let formMeta = data.formMeta
+  let formData = payload.data
+  let formMeta = payload.meta
 
   for (const key of Object.keys(formData)) {
     if (Array.isArray(formData[key])) {
@@ -103,10 +102,8 @@ function generateId(item) {
 }
 
 function associate(payload, data) {
-  let params = payload.params
-
-  if (params.dependsOn) {
-    params.dependsOn.forEach((dep) => {
+  if (payload.dependsOn) {
+    payload.dependsOn.forEach((dep) => {
       const index = wasProcessedSuccessfully(dep.id)
 
       if (index !== false) {
@@ -164,24 +161,23 @@ function currencyFilter(obj, key) {
 }
 
 async function executeAction(payload, data) {
-  let params = payload.params
-  let model = models[params.model]
+  let model = models[payload.model]
   let result
 
-  switch (params.action) {
+  switch (payload.action) {
     case 'create':
       result = await model.create(data)
-          .catch(catchHandler.bind(null, payload))
+        .catch(catchHandler.bind(null, payload))
       break
 
     case 'update':
       result = await model.findOneAndUpdate({ _id: data._id }, data)
-          .catch(catchHandler.bind(null, payload))
+        .catch(catchHandler.bind(null, payload))
       break
-
+      
     case 'delete':
-      result = await model.deleteOne({ _id: params.objectId })
-          .catch(catchHandler.bind(null, payload))
+      result = await model.deleteOne({ _id: payload.data._id })
+        .catch(catchHandler.bind(null, payload))
       break
   }
 
@@ -197,15 +193,13 @@ async function process(req, res) {
     let result
 
     for (let payload of payloads) {
-      let params = payload.params
-
       console.log('log > payload:', payload)
-      console.log('log > payload dependsOn:', payload.id, params.dependsOn)
+      console.log('log > payload dependsOn:', payload.id, payload.dependsOn)
 
       if (payload.status !== 'success') {
 
-        if (['create', 'update'].includes(params.action)) {
-          if (!params.dependsOn) {
+        if (['create', 'update'].includes(payload.action)) {
+          if (!payload.dependsOn) {
             let data = generateId(mergeObjects(payload))
 
             for (let key of Object.keys(data)) {
@@ -228,12 +222,10 @@ async function process(req, res) {
     }
 
     for (let payload of payloads) {
-      let params = payload.params
-
       if (payload.status !== 'success') {
 
-        if (['create', 'update'].includes(params.action)) {
-          if (params.dependsOn) {
+        if (['create', 'update'].includes(payload.action)) {
+          if (payload.dependsOn) {
             let data = generateId(mergeObjects(payload))
 
             for (let key of Object.keys(data)) {
@@ -258,11 +250,9 @@ async function process(req, res) {
     }
 
     for (let payload of payloads) {
-      let params = payload.params
-
       if (payload.status !== 'success') {
 
-        if (params.action === 'delete') {
+        if (payload.action === 'delete') {
           result = await executeAction(payload)
           if (result) {
             addToCache(payload, result)

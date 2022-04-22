@@ -1,18 +1,15 @@
 'use strict';
-                                                       
+
 const Promise = require('bluebird')
-const Pais = Promise.promisifyAll(require('../model/Pais'))
+const Servico = Promise.promisifyAll(require('../model/Servico'))
 
-class Paises {
+class ServicoApi {
   static async findAll(req, res) {
-    const search = req.query.search
-
     let queryParams = {}
-    if (search) queryParams = { ...queryParams, $text: { $search: search } }
 
     let projection = {}
 
-    const result = await Pais.findAsync({ ...queryParams }, projection, {
+    const result = await Servico.findAsync({ ...queryParams }, projection, {
       sort: { nome: 1 }
     }).catch(console.error)
 
@@ -24,7 +21,7 @@ class Paises {
 
     let projection = {}
 
-    const result = await Pais.findByIdAsync(id, projection).catch(console.error)
+    const result = await Servico.findByIdAsync(id, projection).catch(console.error)
 
     res.send(result)
   }
@@ -32,9 +29,9 @@ class Paises {
   static async create(req, res) {
     let data = req.body
 
-    const pais = new Pais(data)
+    const servico = new Servico(data)
 
-    pais.save().then((document) => {
+    servico.save().then((document) => {
       res.sendStatus(201)
     }).catch((err) => {
       res.sendStatus(400)
@@ -46,7 +43,7 @@ class Paises {
 
     let data = req.body
 
-    const result = await Pais.findByIdAndUpdateAsync(id, data).catch(console.error)
+    const result = await Servico.findByIdAndUpdateAsync(id, data).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
@@ -55,11 +52,11 @@ class Paises {
   static async delete(req, res) {
     const id = req.params.id
 
-    const result = await Pais.deleteOneAsync({ _id: id }).catch(console.error)
+    const result = await Servico.deleteOneAsync({ _id: id }).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
   }
 }
 
-module.exports = Paises
+module.exports = ServicoApi

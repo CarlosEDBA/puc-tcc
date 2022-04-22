@@ -1,6 +1,9 @@
 const core = require('../core')
 const globals = require('./globals')
 const setup = require('./setup')
+
+const Usuario = require('./model/Usuario')
+
 const WebRouter = require('./router/WebRouter')
 const ApiRouter = require('./router/ApiRouter')
 
@@ -11,7 +14,9 @@ const jwt = new JWT({
     privateKey: globals.PRIVATE_KEY,
     publicKey: globals.PUBLIC_KEY,
     audience: 'conceptcfc',
-    issuer: 'conceptcfc'
+    issuer: 'conceptcfc',
+    model: Usuario,
+    payloadAttributes: ['_id', 'nome', 'sobrenome', 'email', 'funcao']
 })
 
 jwt.loadKeys()
@@ -20,7 +25,8 @@ jwt.loadKeys()
           path: [
               '/',
               '/login',
-              '/api/v1/token'
+              '/api/v1/token',
+              '/api/v1/public',
           ]
       })
 
@@ -30,6 +36,7 @@ jwt.loadKeys()
           express: {
               corsWhitelist: [
                   'http://localhost:4000',
+                  'http://192.168.1.5:4000',
               ],
 
               middlewares: [

@@ -1,21 +1,20 @@
 'use strict';
 
 const Promise = require('bluebird')
-const Estado = Promise.promisifyAll(require('../model/Estado'))
+const Config = Promise.promisifyAll(require('../model/Config'))
 
-class Estados {
+class ConfigApi {
   static async findAll(req, res) {
-    const pais = req.query.pais
-    const search = req.query.search
+    const count = req.params.count || 20
+    const cursor = req.params.cursor
 
     let queryParams = {}
-    if (pais) queryParams = { ...queryParams, pais: pais }
-    if (search) queryParams = { ...queryParams, $text: { $search: search } }
+    if (cursor) queryParams = { ...queryParams, _id: { $gt: cursor } }
 
     let projection = {}
 
-    const result = await Estado.findAsync({ ...queryParams }, projection, {
-      sort: { nome: 1 }
+    const result = await Config.findAsync({ ...queryParams }, projection, {
+      limit: count
     }).catch(console.error)
 
     res.send(result)
@@ -26,7 +25,7 @@ class Estados {
 
     let projection = {}
 
-    const result = await Estado.findByIdAsync(id, projection).catch(console.error)
+    const result = await Config.findByIdAsync(id, projection).catch(console.error)
 
     res.send(result)
   }
@@ -34,9 +33,9 @@ class Estados {
   static async create(req, res) {
     let data = req.body
 
-    const estado = new Estado(data)
+    const config = new Config(data)
 
-    estado.save().then((document) => {
+    config.save().then((document) => {
       res.sendStatus(201)
     }).catch((err) => {
       res.sendStatus(400)
@@ -48,7 +47,7 @@ class Estados {
 
     let data = req.body
 
-    const result = await Estado.findByIdAndUpdateAsync(id, data).catch(console.error)
+    const result = await Config.findByIdAndUpdateAsync(id, data).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
@@ -57,12 +56,11 @@ class Estados {
   static async delete(req, res) {
     const id = req.params.id
 
-    const result = await Estado.deleteOneAsync({ _id: id }).catch(console.error)
+    const result = await Config.deleteOneAsync({ _id: id }).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
   }
 }
 
-module.exports = Estados
-
+module.exports = ConfigApi

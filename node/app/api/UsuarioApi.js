@@ -16,7 +16,7 @@ function attrToMongoSyntax(attributes) {
   return arr
 }
 
-class Usuarios {
+class UsuarioApi {
   static async suggestions(req, res) {
     let data = req.body
     let str = data.str
@@ -111,4 +111,4 @@ class Usuarios {
   }
 }
 
-module.exports = Usuarios
+module.exports = UsuarioApi

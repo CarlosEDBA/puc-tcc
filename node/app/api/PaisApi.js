@@ -1,22 +1,18 @@
 'use strict';
-
+                                                       
 const Promise = require('bluebird')
-const Cidade = Promise.promisifyAll(require('../model/Cidade'))
+const Pais = Promise.promisifyAll(require('../model/Pais'))
 
-class Cidades {
+class PaisApi {
   static async findAll(req, res) {
-    const pais = req.query.pais
-    const estado = req.query.estado
     const search = req.query.search
 
     let queryParams = {}
-    if (pais) queryParams = { ...queryParams, pais: pais }
-    if (estado) queryParams = { ...queryParams, estado: estado }
     if (search) queryParams = { ...queryParams, $text: { $search: search } }
 
     let projection = {}
 
-    const result = await Cidade.findAsync({ ...queryParams }, projection, {
+    const result = await Pais.findAsync({ ...queryParams }, projection, {
       sort: { nome: 1 }
     }).catch(console.error)
 
@@ -28,7 +24,7 @@ class Cidades {
 
     let projection = {}
 
-    const result = await Cidade.findByIdAsync(id, projection).catch(console.error)
+    const result = await Pais.findByIdAsync(id, projection).catch(console.error)
 
     res.send(result)
   }
@@ -36,9 +32,9 @@ class Cidades {
   static async create(req, res) {
     let data = req.body
 
-    const cidade = new Cidade(data)
+    const pais = new Pais(data)
 
-    cidade.save().then((document) => {
+    pais.save().then((document) => {
       res.sendStatus(201)
     }).catch((err) => {
       res.sendStatus(400)
@@ -50,7 +46,7 @@ class Cidades {
 
     let data = req.body
 
-    const result = await Cidade.findByIdAndUpdateAsync(id, data).catch(console.error)
+    const result = await Pais.findByIdAndUpdateAsync(id, data).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
@@ -59,12 +55,11 @@ class Cidades {
   static async delete(req, res) {
     const id = req.params.id
 
-    const result = await Cidade.deleteOneAsync({ _id: id }).catch(console.error)
+    const result = await Pais.deleteOneAsync({ _id: id }).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
   }
 }
 
-module.exports = Cidades
-
+module.exports = PaisApi

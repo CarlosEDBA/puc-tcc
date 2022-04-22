@@ -1,8 +1,9 @@
 const Promise = require('bluebird')
 const nanoid = require('nanoid')
-const moment = require('moment')
 
 const Usuario = Promise.promisifyAll(require('../model/Usuario'))
+
+const Auth = require('../Auth')
 
 const models = {
     Usuario,
@@ -61,37 +62,36 @@ function catchHandler(item, err) {
 }
 
 function mergeObjects(payload) {
-    console.log('log > netqueue > mergeObjects called!')
+    console.log('log > PublicEndpoint > mergeObjects called!')
 
     let mergedData = {}
 
     let data = payload.data
-    let formData = data.formData
-    let formMeta = data.formMeta
+    let meta = payload.meta
 
-    for (const key of Object.keys(formData)) {
-        if (Array.isArray(formData[key])) {
-            console.log('log > netqueue > array found at ' + key)
+    for (const key of Object.keys(data)) {
+        if (Array.isArray(data[key])) {
+            console.log('log > PublicEndpoint > array found at ' + key)
 
-            for (let i = 0; i < formData[key].length; i++) {
-                let currentItem = formData[key][i]
+            for (let i = 0; i < data[key].length; i++) {
+                let currentItem = data[key][i]
 
                 for (const subKey of Object.keys(currentItem)) {
-                    if (formMeta[key] && formMeta[key][i]) {
-                        if (!formMeta[key][i][subKey]) {
-                            formMeta[key][i][subKey] = formData[key][i][subKey]
+                    if (meta[key] && meta[key][i]) {
+                        if (!meta[key][i][subKey]) {
+                            meta[key][i][subKey] = data[key][i][subKey]
                         }
                     }
                 }
 
-                if (formMeta[key] && !formMeta[key][i]) {
-                    formMeta[key].push(formData[key][i])
+                if (meta[key] && !meta[key][i]) {
+                    meta[key].push(data[key][i])
                 }
             }
         }
     }
 
-    mergedData = Object.assign({}, formData, formMeta)
+    mergedData = Object.assign({}, data, meta)
 
     return mergedData
 }
@@ -103,10 +103,8 @@ function generateId(item) {
 }
 
 function associate(payload, data) {
-    let params = payload.params
-
-    if (params.dependsOn) {
-        params.dependsOn.forEach((dep) => {
+    if (payload.dependsOn) {
+        payload.dependsOn.forEach((dep) => {
             const index = wasProcessedSuccessfully(dep.id)
 
             if (index !== false) {
@@ -123,7 +121,8 @@ function arrayFilter(obj, key) {
 }
 
 function arrayLabelValueFilter(obj, key) {
-    console.log('log > arrayLabelValueFilter called!', key, obj[key])
+    console.log('log > PublicEndpoint > arrayLabelValueFilter called!', key, obj[key])
+
     if (Array.isArray(obj[key]) && obj[key].length > 0) {
         if (obj[key][0]['label'] && obj[key][0]['value']) {
             let newArr = []
@@ -163,12 +162,40 @@ function currencyFilter(obj, key) {
     }
 }
 
+function register(payload, data) {
+    return new Promise(async (resolve, reject) => {
+        let model = models[payload.model]
+        let result
+
+        console.log('data', data)
+
+        let user = {
+            ...data,
+            senha: await model.hashPassword(data.senha),
+            funcao: 'fornecedor'
+        }
+
+        console.log('user', user)
+
+        result = await model.create(user).catch(catchHandler.bind(null, payload))
+        console.log('result', result)
+
+        if (result) {
+            const token = await Auth.authenticate(jwt, data.email, data.senha)
+                .catch(reject)
+
+            resolve(token)
+        } else {
+            reject(new Error('Error while registering the user.'))
+        }
+    })
+}
+
 async function executeAction(payload, data) {
-    let params = payload.params
-    let model = models[params.model]
+    let model = models[payload.model]
     let result
 
-    switch (params.action) {
+    switch (payload.action) {
         case 'create':
             result = await model.create(data)
                 .catch(catchHandler.bind(null, payload))
@@ -180,8 +207,12 @@ async function executeAction(payload, data) {
             break
 
         case 'delete':
-            result = await model.deleteOne({ _id: params.objectId })
+            result = await model.deleteOne({ _id: data._id })
                 .catch(catchHandler.bind(null, payload))
+            break
+
+        case 'register':
+            result = await register(payload, data)
             break
     }
 
@@ -189,23 +220,23 @@ async function executeAction(payload, data) {
 }
 
 async function process(req, res) {
+    console.log('log > PublicEndpoint > process called!')
+
     cache = initializeCache()
 
-    const payloads = req.body.data
+    const payloads = req.body
 
     if (payloads) {
         let result
 
         for (let payload of payloads) {
-            let params = payload.params
-
-            console.log('log > payload:', payload)
-            console.log('log > payload dependsOn:', payload.id, params.dependsOn)
+            console.log('log > PublicEndpoint > payload:', payload)
+            console.log('log > PublicEndpoint > payload dependsOn:', payload.id, payload.dependsOn)
 
             if (payload.status !== 'success') {
 
-                if (['create', 'update'].includes(params.action)) {
-                    if (!params.dependsOn) {
+                if (['create', 'update', 'register'].includes(payload.action)) {
+                    if (!payload.dependsOn) {
                         let data = generateId(mergeObjects(payload))
 
                         for (let key of Object.keys(data)) {
@@ -228,12 +259,10 @@ async function process(req, res) {
         }
 
         for (let payload of payloads) {
-            let params = payload.params
-
             if (payload.status !== 'success') {
 
-                if (['create', 'update'].includes(params.action)) {
-                    if (params.dependsOn) {
+                if (['create', 'update'].includes(payload.action)) {
+                    if (payload.dependsOn) {
                         let data = generateId(mergeObjects(payload))
 
                         for (let key of Object.keys(data)) {
@@ -258,11 +287,9 @@ async function process(req, res) {
         }
 
         for (let payload of payloads) {
-            let params = payload.params
-
             if (payload.status !== 'success') {
 
-                if (params.action === 'delete') {
+                if (payload.action === 'delete') {
                     result = await executeAction(payload)
                     if (result) {
                         addToCache(payload, result)
@@ -279,19 +306,6 @@ async function process(req, res) {
     }
 }
 
-async function search(req, res) {
-    const params = req.body.params
-
-    let model = models[params.model]
-    let result
-
-    if (model && params.str) {
-        result = await model.fuzzySearch(params.str).catch(console.error)
-
-        res.send(result)
-    }
-}
-
 module.exports = {
-    process, search
+    process
 }

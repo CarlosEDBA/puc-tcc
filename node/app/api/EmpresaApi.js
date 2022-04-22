@@ -1,9 +1,9 @@
 'use strict';
 
 const Promise = require('bluebird')
-const Config = Promise.promisifyAll(require('../model/Config'))
+const Empresa = Promise.promisifyAll(require('../model/Empresa'))
 
-class Configs {
+class EmpresaApi {
   static async findAll(req, res) {
     const count = req.params.count || 20
     const cursor = req.params.cursor
@@ -13,7 +13,7 @@ class Configs {
 
     let projection = {}
 
-    const result = await Config.findAsync({ ...queryParams }, projection, {
+    const result = await Empresa.findAsync({ ...queryParams }, projection, {
       limit: count
     }).catch(console.error)
 
@@ -25,7 +25,7 @@ class Configs {
 
     let projection = {}
 
-    const result = await Config.findByIdAsync(id, projection).catch(console.error)
+    const result = await Empresa.findByIdAsync(id, projection).catch(console.error)
 
     res.send(result)
   }
@@ -33,9 +33,9 @@ class Configs {
   static async create(req, res) {
     let data = req.body
 
-    const config = new Config(data)
+    const empresa = new Empresa(data)
 
-    config.save().then((document) => {
+    empresa.save().then((document) => {
       res.sendStatus(201)
     }).catch((err) => {
       res.sendStatus(400)
@@ -47,7 +47,7 @@ class Configs {
 
     let data = req.body
 
-    const result = await Config.findByIdAndUpdateAsync(id, data).catch(console.error)
+    const result = await Empresa.findByIdAndUpdateAsync(id, data).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
@@ -56,11 +56,11 @@ class Configs {
   static async delete(req, res) {
     const id = req.params.id
 
-    const result = await Config.deleteOneAsync({ _id: id }).catch(console.error)
+    const result = await Empresa.deleteOneAsync({ _id: id }).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
   }
 }
 
-module.exports = Configs
+module.exports = EmpresaApi
