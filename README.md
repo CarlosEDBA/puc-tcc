@@ -10,3 +10,4 @@ Plataforma de gestão de autoescolas feita como trabalho de conclusão para o cu
 
 - [Painel de Planejamento](https://airtable.com/shrYxZybWc3v8pIri)
 - [Protótipos das telas](https://www.figma.com/file/ZoRYxanBxfYoJB9rzrtDkP/Untitled?node-id=0%3A1)
+- [PBB - Canvas](https://miro.com/app/board/o9J_l2mXV40=/)
