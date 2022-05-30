@@ -32,25 +32,25 @@ function request(payloads) {
                   data: null,
                   meta: null,
                 }))
-
-                if (response.data) dispatch(logResponse(response))
               }
 
               if (response.status === 'error') {
                 dispatch(updateRequest(response.id, {
-                  status: 'error'
+                  status: 'error',
+                  error: response.error,
                 }))
 
-                dispatch(logResponse(response))
+                reject({
+                  status: 'error',
+                  error: response.error,
+                })
               }
             }
           }
+
+          resolve(data)
         }
-
-        resolve()
-
       } catch (err) {
-        console.error(err)
         reject(err)
       }
     } else {
@@ -76,7 +76,8 @@ function request(payloads) {
 
         if (response.status === 'error') {
           dispatch(updateRequest(response.id, {
-            status: 'error'
+            status: 'error',
+            error: payload.error
           }))
         }
 

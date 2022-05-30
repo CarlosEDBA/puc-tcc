@@ -7,7 +7,6 @@ import MaskedInput from 'react-text-mask'
 import FormHelper from '@/helpers/FormHelper'
 
 export default function TextInput(props) {
-  const [data, setData] = useState('')
   const [meta, setMeta] = useState('')
 
   const formId = props.formId
@@ -27,6 +26,18 @@ export default function TextInput(props) {
     setInitialValue()
   }, [formId, initialValue])
 
+  let data = ''
+
+  const forms = useSelector(state => state.Forms)
+
+  function updateRenderedValue() {
+    if (formId && forms[formId]) {
+      if (forms[formId]['data'][attribute] !== undefined) {
+        data = forms[formId]['data'][attribute]
+      }
+    }
+  }
+
   function initFormAttribute() {
     if (FormHelper.dataAttributeIsUndefined(formId, attribute)) {
       FormHelper.setDataAttribute(formId, attribute, { $set: '' })
@@ -45,7 +56,7 @@ export default function TextInput(props) {
         })
       }
 
-      setData(_initialValue)
+      data = _initialValue
     }
   }
 
@@ -55,11 +66,11 @@ export default function TextInput(props) {
     console.log(event)
 
     if (inputText !== undefined && inputText !== null) {
+      data = inputText
+
       FormHelper.setDataAttribute(formId, attribute, {
         $set: inputText
       })
-
-      setData(inputText)
 
       if (onChange) onChange({
         attribute: attribute,
@@ -89,6 +100,8 @@ export default function TextInput(props) {
     }
   }
 
+  updateRenderedValue()
+
   return (
     <div className={classNames('input', classes)}>
       {(label) ? (
@@ -97,7 +110,7 @@ export default function TextInput(props) {
       <div className="input__container">
         {(mask)
           ? renderMaskedInput()
-          : (<input type={type} value={data} placeholder={placeholder} onChange={handleInputChange} onFocus={handleInputFocus}/>)
+          : (<input type={type} value={data || ''} placeholder={placeholder} onChange={handleInputChange} onFocus={handleInputFocus}/>)
         }
       </div>
     </div>

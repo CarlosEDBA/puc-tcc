@@ -114,16 +114,18 @@ export default {
     store.dispatch(resetForm(formId))
   },
 
-  async submit(props, process) {
+  async submit(props, process, endpoint) {
     let formId = props.id
     let requestId = null
 
     let payload = {
       //id: id, // problem when the form id stays the same due to same component lifecycle
+      formId: formId,
       model: props.model,
       action: props.action,
       dependsOn: props.dependsOn || null,
       status: 'idle',
+      type: props.type || 'object',
     }
 
     let state = store.getState()
@@ -149,6 +151,16 @@ export default {
 
   getSchema(modelName) {
     if (schemas[modelName]) return schemas[modelName]
+
+    return null
+  },
+
+  getFormResponse(responses, formId) {
+    for (let i = 0; i < responses.length; i++) {
+      const response = responses[i]
+
+      if (response.formId === formId) return response
+    }
 
     return null
   },
