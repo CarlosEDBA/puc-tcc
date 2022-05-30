@@ -14,7 +14,7 @@ const schema = new Schema({
   nomePai:            String,
   dataNascimento:     Date,
   sexo:               String,
-  cpf:                String,
+  cpf:                { type: String, unique: true },
   tipoDocumento:      { type: ObjectId, ref: 'TipoDocumento' },
   numeroDocumento:    String,
   ufDocumento:        String,
@@ -34,7 +34,6 @@ const schema = new Schema({
   inicioProcesso:     Date,
   fimProcesso:        Date,
   statusProcesso:     { type: ObjectId, ref: 'StatusProcesso' },
-
 }, {
   collection: 'alunos'
 })

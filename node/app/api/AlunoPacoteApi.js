@@ -1,25 +1,25 @@
 'use strict';
 
 const Promise = require('bluebird')
-const ServicoPacote = Promise.promisifyAll(require('../model/ServicoPacote'))
+const AlunoPacote = Promise.promisifyAll(require('../model/AlunoPacote'))
 
-class ServicoPacoteApi {
+class AlunoPacoteApi {
   static async findAll(req, res) {
-    const pacote = req.query.pacote
+    const aluno = req.query.pacote
 
     let queryParams = {}
-    if (pacote) queryParams = { ...queryParams, pacote: pacote }
+    if (aluno) queryParams = { ...queryParams, aluno: aluno }
 
     let projection = {}
 
-    const result = await ServicoPacote.find(
+    const result = await AlunoPacote.find(
         { ...queryParams },
         projection,
         {
           sort: { nome: 1 }
         })
+        .populate('aluno')
         .populate('pacote')
-        .populate('servico')
         .catch(console.error)
 
     res.send(result)
@@ -30,7 +30,7 @@ class ServicoPacoteApi {
 
     let projection = {}
 
-    const result = await ServicoPacote.findById(id, projection).catch(console.error)
+    const result = await AlunoPacote.findById(id, projection).catch(console.error)
 
     res.send(result)
   }
@@ -38,9 +38,9 @@ class ServicoPacoteApi {
   static async create(req, res) {
     let data = req.body
 
-    const servicoPacote = new ServicoPacote(data)
+    const alunoPacote = new AlunoPacote(data)
 
-    servicoPacote.save().then((document) => {
+    alunoPacote.save().then((document) => {
       res.sendStatus(201)
     }).catch((err) => {
       res.sendStatus(400)
@@ -52,7 +52,7 @@ class ServicoPacoteApi {
 
     let data = req.body
 
-    const result = await ServicoPacote.findByIdAndUpdate(id, data).catch(console.error)
+    const result = await AlunoPacote.findByIdAndUpdate(id, data).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
@@ -61,11 +61,11 @@ class ServicoPacoteApi {
   static async delete(req, res) {
     const id = req.params.id
 
-    const result = await ServicoPacote.deleteOne({ _id: id }).catch(console.error)
+    const result = await AlunoPacote.deleteOne({ _id: id }).catch(console.error)
 
     if (result) res.sendStatus(200)
     else res.sendStatus(400)
   }
 }
 
-module.exports = ServicoPacoteApi
+module.exports = AlunoPacoteApi

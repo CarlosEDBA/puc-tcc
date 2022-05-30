@@ -179,17 +179,17 @@ async function cadastrarPacotes() {
   const servicos = await cadastrarServicos()
 
   const pacotes = [
-    { nome: 'Primeira Habilitação', categoria: 'A', servicos: [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [16, 45], [19, 20], [20, 1], [21, 1], [22, 1], [25, 1]] },
-    { nome: 'Primeira Habilitação', categoria: 'B', servicos: [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [16, 45], [18, 20], [20, 1], [21, 1], [23, 1], [25, 1]] },
-    { nome: 'Primeira Habilitação', categoria: 'AB', servicos: [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [16, 45], [18, 20], [19, 20], [20, 1], [21, 1], [24, 1], [25, 1]] },
-    { nome: 'Alteração de Categoria', categoria: 'A', servicos: [[0, 1], [1, 1], [2, 1], [5, 1], [26, 1], [19, 15], [25, 1]] },
-    { nome: 'Alteração de Categoria', categoria: 'B', servicos: [[0, 1], [1, 1], [2, 1], [5, 1], [26, 1], [18, 20], [25, 1]] },
-    { nome: 'Curso de Reciclagem', categoria: null, servicos: [[0, 1], [16, 30]] },
-    { nome: 'Curso de Renovação', categoria: null, servicos: [[0, 1], [16, 15], [1, 1], [2, 1]] },
+    { nome: 'Primeira Habilitação', categoria: 'A', ordem: 3, servicos: [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [16, 45], [19, 20], [20, 1], [21, 1], [22, 1], [25, 1]] },
+    { nome: 'Primeira Habilitação', categoria: 'B', ordem: 1, servicos: [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [16, 45], [18, 20], [20, 1], [21, 1], [23, 1], [25, 1]] },
+    { nome: 'Primeira Habilitação', categoria: 'AB', ordem: 2, servicos: [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [16, 45], [18, 20], [19, 20], [20, 1], [21, 1], [24, 1], [25, 1]] },
+    { nome: 'Alteração de Categoria', categoria: 'A', ordem: 4, servicos: [[0, 1], [1, 1], [2, 1], [5, 1], [26, 1], [19, 15], [25, 1]] },
+    { nome: 'Alteração de Categoria', categoria: 'B', ordem: 5, servicos: [[0, 1], [1, 1], [2, 1], [5, 1], [26, 1], [18, 20], [25, 1]] },
+    { nome: 'Curso de Reciclagem', categoria: null, ordem: 6, servicos: [[0, 1], [16, 30]] },
+    { nome: 'Curso de Renovação', categoria: null, ordem: 7, servicos: [[0, 1], [16, 15], [1, 1], [2, 1]] },
   ]
 
   for (const pacote of pacotes) {
-    const p = new Pacote({ nome: pacote.nome, categoria: pacote.categoria })
+    const p = new Pacote({ nome: pacote.nome, categoria: pacote.categoria, ordem: pacote.ordem })
     const resultPacote = await p.save()
     const idPacote = resultPacote._id
 

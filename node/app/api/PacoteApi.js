@@ -10,7 +10,7 @@ class PacoteApi {
     let projection = {}
 
     const result = await Pacote.findAsync({ ...queryParams }, projection, {
-      sort: { nome: 1 }
+      sort: { ordem: 1 }
     }).catch(console.error)
 
     res.send(result)

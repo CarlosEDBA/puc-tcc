@@ -3,13 +3,9 @@ const nanoid = require('nanoid')
 const moment = require('moment')
 
 const Aluno = Promise.promisifyAll(require('../model/Aluno'))
-const AlunoPacote = Promise.promisifyAll(require('../model/AlunoPacote'))
-const AlunoServico = Promise.promisifyAll(require('../model/AlunoServico'))
 
 const models = {
   Aluno,
-  AlunoPacote,
-  AlunoServico,
 }
 
 let cache = {}
@@ -26,12 +22,10 @@ function addToCache(item, result) {
   cache.processed.push([item.id, result])
 }
 
-function addResponseToCache(payload, result = null) {
+function addResponseToCache(payload) {
   cache.responses.push({
     id: payload.id,
-    formId: payload.formId,
-    status: 'success',
-    result: { _id: result._id },
+    status: 'success'
   })
 }
 
@@ -193,129 +187,38 @@ async function executeAction(payload, data) {
 async function process(req, res) {
   cache = initializeCache()
 
-  const payloads = req.body.data
-
-  if (payloads) {
-    let result
-
-    for (let payload of payloads) {
-      console.log('log > payload:', payload)
-      console.log('log > payload dependsOn:', payload.id, payload.dependsOn)
-
-      if (payload.status !== 'success') {
-
-        if (['create', 'update'].includes(payload.action)) {
-
-          if (payload.type === 'array') {
-            console.log('log > array payload')
-
-            const arr = payload.data
-
-            for (let i = 0; i < arr.length; i++) {
-              const item = arr[i]
-
-              let data = generateId(item)
-
-              for (let key of Object.keys(data)) {
-                //arrayFilter(data, key)
-                arrayLabelValueFilter(data, key)
-                labelValueFilter(data, key)
-                dateFilter(data, key)
-                //currencyFilter(data, key)
-              }
-  
-              result = await executeAction(payload, data)
-              if (result) {
-                addToCache(payload, result)
-                addResponseToCache(payload, result)
-              }
-            }
-          } else {
-            if (!payload.dependsOn) {
-              let data = generateId(mergeObjects(payload))
-  
-              for (let key of Object.keys(data)) {
-                //arrayFilter(data, key)
-                arrayLabelValueFilter(data, key)
-                labelValueFilter(data, key)
-                dateFilter(data, key)
-                //currencyFilter(data, key)
-              }
-  
-              result = await executeAction(payload, data)
-              if (result) {
-                addToCache(payload, result)
-                addResponseToCache(payload, result)
-              }
-            }
-          }
-
-        }
-
-      }
-    }
-
-    for (let payload of payloads) {
-      if (payload.status !== 'success') {
-
-        if (['create', 'update'].includes(payload.action)) {
-          if (payload.dependsOn) {
-            let data = generateId(mergeObjects(payload))
-
-            for (let key of Object.keys(data)) {
-              //arrayFilter(data, key)
-              arrayLabelValueFilter(data, key)
-              labelValueFilter(data, key)
-              dateFilter(data, key)
-              //currencyFilter(data, key)
-            }
-
-            associate(payload, data)
-
-            result = await executeAction(payload, data)
-            if (result) {
-              addToCache(payload, result)
-              addResponseToCache(payload, result)
-            }
-          }
-        }
-
-      }
-    }
-
-    for (let payload of payloads) {
-      if (payload.status !== 'success') {
-
-        if (payload.action === 'delete') {
-          result = await executeAction(payload)
-          if (result) {
-            addToCache(payload, result)
-            addResponseToCache(payload, result)
-          }
-        }
-
-      }
-    }
-
-    res.send(cache.responses.concat(cache.errors))
-  } else {
-    res.sendStatus(204)
-  }
-}
-
-async function search(req, res) {
-  const params = req.body.params
-
-  let model = models[params.model]
   let result
 
-  if (model && params.str) {
-    result = await model.fuzzySearch(params.str).catch(console.error)
+  const payloads = req.body.data
 
-    res.send(result)
+  const aluno = req.body.aluno
+  const pacotes = req.body.pacotes
+  const servicos = req.body.servicos
+
+  if (aluno) {
+    const payload = aluno
+
+    let data = generateId(mergeObjects(payload))
+
+    for (let key of Object.keys(data)) {
+      //arrayFilter(data, key)
+      arrayLabelValueFilter(data, key)
+      labelValueFilter(data, key)
+      dateFilter(data, key)
+      //currencyFilter(data, key)
+    }
+
+    result = await executeAction(payload, data)
+    
+    if (result) {
+      addToCache(payload, result)
+      addResponseToCache(payload)
+    }
   }
+
+  res.send(cache.responses.concat(cache.errors))
 }
 
 module.exports = {
-  process, search
+  process
 }

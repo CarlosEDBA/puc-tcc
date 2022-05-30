@@ -12,8 +12,12 @@ const ServicoPacoteApi = require('../api/ServicoPacoteApi')
 const TipoDocumentoApi = require('../api/TipoDocumentoApi')
 const StatusProcessoApi = require('../api/StatusProcessoApi')
 const PreferenciaUsuarioApi = require('../api/PreferenciaUsuarioApi')
+const AlunoApi = require('../api/AlunoApi')
+const AlunoPacoteApi = require('../api/AlunoPacoteApi')
+const AlunoServicoApi = require('../api/AlunoServicoApi')
 
 const MainEndpoint = require('../endpoints/MainEndpoint')
+const MatriculaEndpoint = require('../endpoints/MatriculaEndpoint')
 const PublicEndpoint = require('../endpoints/PublicEndpoint')
 const FileSystemEndpoint = require('../endpoints/FileSystemEndpoint')
 
@@ -74,6 +78,15 @@ module.exports = (jwt) => {
   router.get('/v1/servicos-pacotes/:id', ServicoPacoteApi.findOneById)
   router.get('/v1/servicos-pacotes', ServicoPacoteApi.findAll)
 
+  router.get('/v1/alunos/:id', AlunoApi.findOneById)
+  router.get('/v1/alunos', AlunoApi.findAll)
+
+  router.get('/v1/alunos-pacotes/:id', AlunoPacoteApi.findOneById)
+  router.get('/v1/alunos-pacotes', AlunoPacoteApi.findAll)
+
+  router.get('/v1/alunos-servicos/:id', AlunoServicoApi.findOneById)
+  router.get('/v1/alunos-servicos', AlunoServicoApi.findAll)
+
   router.get('/v1/tipos-documentos/:id', TipoDocumentoApi.findOneById)
   router.get('/v1/tipos-documentos', TipoDocumentoApi.findAll)
 
@@ -91,6 +104,12 @@ module.exports = (jwt) => {
 
   router.post(
       '/v1/main',
+      ...parsers,
+      MainEndpoint.process
+  )
+
+  router.post(
+      '/v1/matricula',
       ...parsers,
       MainEndpoint.process
   )

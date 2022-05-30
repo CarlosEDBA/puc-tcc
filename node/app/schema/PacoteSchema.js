@@ -10,6 +10,7 @@ const Mixed = Schema.Types.Mixed
 const schema = new Schema({
   nome:                 String,
   categoria:            String,
+  ordem:                Number,
 }, {
   collection: 'pacotes'
 })
